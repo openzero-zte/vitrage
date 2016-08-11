@@ -51,7 +51,7 @@ class ScenarioEvaluator(object):
                  entity_graph,
                  scenario_repo,
                  event_queue,
-                 enabled=False):
+                 enabled=True):
         self.conf = conf
         self._scenario_repo = scenario_repo
         self._entity_graph = entity_graph
