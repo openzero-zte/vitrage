@@ -27,3 +27,6 @@ etc/vitrage/vitrage.conf
 
 #Python
 *.pyc
+
+#pyenv
+.python-version

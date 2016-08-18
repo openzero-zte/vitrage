@@ -67,7 +67,3 @@ class InstanceDriver(NovaDriverBase):
                 'compute.instance.volume.detach',
                 'compute.instance.pause.end',
                 'compute.instance.unpause.end']
-
-    @staticmethod
-    def get_topic(conf):
-        return conf[NOVA_INSTANCE_DATASOURCE].notification_topic

@@ -27,8 +27,8 @@ LOG = logging.getLogger(__name__)
 
 class AlarmTransformerBase(tbase.TransformerBase):
 
-    def __init__(self, transformers):
-        super(AlarmTransformerBase, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(AlarmTransformerBase, self).__init__(transformers, conf)
 
     def _ok_status(self, entity_event):
         pass

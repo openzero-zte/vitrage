@@ -12,9 +12,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import EventAction
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties as VProps
 from vitrage.datasources.consistency import CONSISTENCY_DATASOURCE
 from vitrage.datasources.consistency.transformer import ConsistencyTransformer
@@ -27,12 +29,19 @@ LOG = logging.getLogger(__name__)
 
 class TestConsistencyTransformer(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PUSH),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=CONSISTENCY_DATASOURCE)
         cls.transformers[CONSISTENCY_DATASOURCE] = \
-            ConsistencyTransformer(cls.transformers)
+            ConsistencyTransformer(cls.transformers, cls.conf)
         cls.actions = [EventAction.DELETE_ENTITY,
                        EventAction.REMOVE_DELETED_ENTITY]
 
@@ -55,7 +64,7 @@ class TestConsistencyTransformer(base.BaseTest):
             self._validate_consistency_vertex_props(vertex, event)
 
             neighbors = wrapper.neighbors
-            self.assertEqual(None, neighbors)
+            self.assertIsNone(neighbors)
 
             action = wrapper.action
             self.assertIn(action, self.actions)
@@ -79,7 +88,7 @@ class TestConsistencyTransformer(base.BaseTest):
             self._validate_consistency_vertex_props(vertex, event)
 
             neighbors = wrapper.neighbors
-            self.assertEqual(None, neighbors)
+            self.assertIsNone(neighbors)
 
             action = wrapper.action
             self.assertIn(action, self.actions)

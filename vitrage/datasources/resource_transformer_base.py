@@ -25,8 +25,8 @@ LOG = logging.getLogger(__name__)
 
 class ResourceTransformerBase(tbase.TransformerBase):
 
-    def __init__(self, transformers):
-        super(ResourceTransformerBase, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(ResourceTransformerBase, self).__init__(transformers, conf)
 
     def _key_values(self, *args):
         return (EntityCategory.RESOURCE,) + args

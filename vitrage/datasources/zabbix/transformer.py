@@ -31,6 +31,7 @@ from vitrage.datasources.zabbix.properties import ZabbixTriggerSeverity \
     as TriggerSeverity
 from vitrage.datasources.zabbix.properties import ZabbixTriggerValue\
     as TriggerValue
+from vitrage.datasources.zabbix import ZABBIX_DATASOURCE
 
 
 import vitrage.graph.utils as graph_utils
@@ -40,8 +41,8 @@ LOG = logging.getLogger(__name__)
 
 class ZabbixTransformer(AlarmTransformerBase):
 
-    def __init__(self, transformers):
-        super(ZabbixTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(ZabbixTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
         return self._create_vertex(entity_event)
@@ -58,6 +59,11 @@ class ZabbixTransformer(AlarmTransformerBase):
 
         update_timestamp = self._format_update_timestamp(update_timestamp,
                                                          sample_timestamp)
+
+        zabbix_hostname = entity_event[ZProps.ZABBIX_RESOURCE_NAME]
+        vitrage_hostname = entity_event[ZProps.RESOURCE_NAME]
+        entity_event[ZProps.DESCRIPTION] = entity_event[ZProps.DESCRIPTION]\
+            .replace(zabbix_hostname, vitrage_hostname)
 
         value = entity_event[ZProps.VALUE]
         entity_state = AlarmProps.INACTIVE_STATE if \
@@ -133,11 +139,11 @@ class ZabbixTransformer(AlarmTransformerBase):
     def _create_entity_key(self, entity_event):
 
         sync_type = entity_event[DSProps.SYNC_TYPE]
-        alarm_name = entity_event[ZProps.DESCRIPTION]
+        alarm_id = entity_event[ZProps.TRIGGER_ID]
         resource_name = entity_event[ZProps.RESOURCE_NAME]
         return tbase.build_key(self._key_values(sync_type,
                                                 resource_name,
-                                                alarm_name))
+                                                alarm_id))
 
     @staticmethod
     def _unify_time_format(entity_event):
@@ -149,3 +155,6 @@ class ZabbixTransformer(AlarmTransformerBase):
                 entity_event[ZProps.LAST_CHANGE],
                 ZProps.ZABBIX_TIMESTAMP_FORMAT,
                 tbase.TIMESTAMP_FORMAT)
+
+    def get_type(self):
+        return ZABBIX_DATASOURCE

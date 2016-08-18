@@ -18,6 +18,7 @@ from oslo_log import log
 import oslo_messaging
 from oslo_service import service as os_service
 
+from vitrage.common.constants import UpdateMethod
 from vitrage import messaging
 
 
@@ -29,12 +30,11 @@ class ListenerService(os_service.Service):
     def __init__(self, conf, drivers, callback):
         super(ListenerService, self).__init__()
 
-        # Get the topics of the drivers and callbacks
-        topics = self._get_topics_set(drivers, conf)
         self.enrich_callbacks_by_events = \
             self._create_callbacks_by_events_dict(drivers, conf)
 
-        self.listener = self._get_topics_listener(conf, topics, callback)
+        topic = conf.datasources.notification_topic
+        self.listener = self._get_topic_listener(conf, topic, callback)
 
     def start(self):
         LOG.info("Vitrage data source Listener Service - Starting...")
@@ -51,36 +51,31 @@ class ListenerService(os_service.Service):
 
         LOG.info("Vitrage data source Listener Service - Stopped!")
 
-    @staticmethod
-    def _get_topics_set(drivers, conf):
-        topics = {driver.get_topic(conf) for driver in drivers.values()}
-
-        if None in topics:
-            topics.remove(None)
-
-        return topics
-
-    @staticmethod
-    def _create_callbacks_by_events_dict(drivers, conf):
+    @classmethod
+    def _create_callbacks_by_events_dict(cls, drivers, conf):
         ret = defaultdict(list)
+        push_drivers = cls._get_push_drivers(drivers, conf)
 
-        for driver in drivers.values():
+        for driver in push_drivers:
             for event in driver.get_event_types(conf):
                 ret[event].append(driver.enrich_event)
 
         return ret
 
-    def _get_topics_listener(self, conf, topics, callback):
+    @staticmethod
+    def _get_push_drivers(drivers, conf):
+        return (driver_cls for datasource, driver_cls in drivers.items()
+                if conf[datasource].update_method.lower() == UpdateMethod.PUSH)
+
+    def _get_topic_listener(self, conf, topic, callback):
         # Create a listener for each topic
         transport = messaging.get_transport(conf)
-        targets = [oslo_messaging.Target(topic=topic, exchange='nova')
-                   for topic in topics]
+        targets = [oslo_messaging.Target(topic=topic, exchange='nova')]
 
         return messaging.get_notification_listener(
             transport,
             targets,
-            [NotificationsEndpoint(self.enrich_callbacks_by_events,
-                                   callback)])
+            [NotificationsEndpoint(self.enrich_callbacks_by_events, callback)])
 
 
 class NotificationsEndpoint(object):

@@ -41,8 +41,8 @@ VITRAGE_TYPE = 'vitrage'
 
 class EvaluatorEventTransformer(transformer_base.TransformerBase):
 
-    def __init__(self, transformers):
-        super(EvaluatorEventTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(EvaluatorEventTransformer, self).__init__(transformers, conf)
         self.actions = self._init_actions()
 
     def _create_snapshot_entity_vertex(self, entity_event):
@@ -158,3 +158,6 @@ class EvaluatorEventTransformer(transformer_base.TransformerBase):
 
     def create_placeholder_vertex(self, **kwargs):
         LOG.info('Evaluator does not create placeholders')
+
+    def get_type(self):
+        return VITRAGE_TYPE

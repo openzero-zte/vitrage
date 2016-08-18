@@ -14,6 +14,7 @@
 
 import datetime
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
@@ -21,6 +22,7 @@ from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
 from vitrage.common.constants import EventAction
 from vitrage.common.constants import SyncMode
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties
 from vitrage.datasources.nova.host import NOVA_HOST_DATASOURCE
 from vitrage.datasources.nova.host.transformer import HostTransformer
@@ -37,14 +39,21 @@ LOG = logging.getLogger(__name__)
 # noinspection PyProtectedMember
 class NovaInstanceTransformerTest(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PUSH),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=NOVA_INSTANCE_DATASOURCE)
         cls.transformers[NOVA_HOST_DATASOURCE] = HostTransformer(
-            cls.transformers)
+            cls.transformers, cls.conf)
         cls.transformers[NOVA_INSTANCE_DATASOURCE] = \
-            InstanceTransformer(cls.transformers)
+            InstanceTransformer(cls.transformers, cls.conf)
 
     def test_create_placeholder_vertex(self):
         LOG.debug('Test create placeholder vertex')
@@ -57,7 +66,7 @@ class NovaInstanceTransformerTest(base.BaseTest):
             VertexProperties.TYPE: NOVA_INSTANCE_DATASOURCE,
             VertexProperties.SAMPLE_TIMESTAMP: timestamp
         }
-        transformer = InstanceTransformer(self.transformers)
+        transformer = self.transformers[NOVA_INSTANCE_DATASOURCE]
 
         # Test action
         placeholder = transformer.create_placeholder_vertex(**properties)
@@ -167,7 +176,7 @@ class NovaInstanceTransformerTest(base.BaseTest):
                          vertex[VertexProperties.TYPE])
 
         expected_project = extract_value(event, 'tenant_id')
-        observed_project = vertex[VertexProperties.TENANT_ID]
+        observed_project = vertex[VertexProperties.PROJECT_ID]
         self.assertEqual(expected_project, observed_project)
 
         state = 'state' if is_update_event else 'status'
@@ -192,7 +201,7 @@ class NovaInstanceTransformerTest(base.BaseTest):
 
     def _validate_host_neighbor(self, h_neighbor, event):
 
-        it = InstanceTransformer(self.transformers)
+        it = self.transformers[NOVA_INSTANCE_DATASOURCE]
 
         name = 'host' if tbase.is_update_event(event) \
             else 'OS-EXT-SRV-ATTR:host'
@@ -226,7 +235,7 @@ class NovaInstanceTransformerTest(base.BaseTest):
         )
         instance_events = mock_sync.generate_random_events_list(spec_list)
 
-        instance_transformer = InstanceTransformer(self.transformers)
+        instance_transformer = self.transformers[NOVA_INSTANCE_DATASOURCE]
         for event in instance_events:
             # Test action
             observed_key = instance_transformer._create_entity_key(event)
@@ -259,7 +268,7 @@ class NovaInstanceTransformerTest(base.BaseTest):
         instance_id = '456'
         expected_key = 'RESOURCE:nova.instance:%s' % instance_id
 
-        instance_transformer = InstanceTransformer(self.transformers)
+        instance_transformer = self.transformers[NOVA_INSTANCE_DATASOURCE]
         # Test action
         key_fields = instance_transformer._key_values(
             NOVA_INSTANCE_DATASOURCE,
@@ -278,7 +287,7 @@ class NovaInstanceTransformerTest(base.BaseTest):
         time = datetime.datetime.utcnow()
 
         # Test action
-        instance_transformer = InstanceTransformer(self.transformers)
+        instance_transformer = self.transformers[NOVA_INSTANCE_DATASOURCE]
         neighbor = instance_transformer._create_host_neighbor(
             vertex_id,
             host_name,

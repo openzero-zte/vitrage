@@ -41,19 +41,19 @@ class TransformerManager(object):
         for datasource_type in conf.datasources.types:
             transformers[datasource_type] = importutils.import_object(
                 conf[datasource_type].transformer,
-                transformers)
+                transformers, conf)
             if opt_exists(conf[datasource_type], ENTITIES):
                 for entity in conf[datasource_type].entities:
                     transformers[entity] = importutils.import_object(
-                        conf[datasource_type].transformer, transformers)
+                        conf[datasource_type].transformer, transformers, conf)
 
         transformers[VITRAGE_TYPE] = importutils.import_object(
             "%s.%s" % (EvaluatorEventTransformer.__module__,
-                       EvaluatorEventTransformer.__name__), transformers)
+                       EvaluatorEventTransformer.__name__), transformers, conf)
 
         transformers[CONSISTENCY_DATASOURCE] = importutils.import_object(
             "%s.%s" % (ConsistencyTransformer.__module__,
-                       ConsistencyTransformer.__name__), transformers)
+                       ConsistencyTransformer.__name__), transformers, conf)
 
         return transformers
 

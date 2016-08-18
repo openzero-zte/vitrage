@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from vitrage.common.constants import UpdateMethod
 
 CINDER_VOLUME_DATASOURCE = 'cinder.volume'
 
@@ -27,7 +28,11 @@ OPTS = [
                        'CinderVolumeDriver',
                help='Nova host driver class path',
                required=True),
-    cfg.StrOpt('notification_topic',
-               default='vitrage_notifications',
-               help='Cinder configured notifications topic for Vitrage'),
+    cfg.StrOpt('update_method',
+               default=UpdateMethod.PUSH,
+               help='None: updates only via Vitrage periodic snapshots.'
+                    'Pull: updates every [changes_interval] seconds.'
+                    'Push: updates by getting notifications from the'
+                    ' datasource itself.',
+               required=True),
 ]

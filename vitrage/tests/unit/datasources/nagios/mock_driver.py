@@ -31,10 +31,6 @@ class MockNagiosDriver(NagiosDriver):
     def enrich_event(event, event_type):
         pass
 
-    @staticmethod
-    def get_topic(conf):
-        return None
-
     def __init__(self, conf):
         super(MockNagiosDriver, self).__init__(conf)
         self.service_datas = None

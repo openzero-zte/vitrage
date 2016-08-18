@@ -24,7 +24,6 @@ class VertexProperties(object):
     AGGREGATED_STATE = 'aggregated_state'
     OPERATIONAL_STATE = 'operational_state'
     PROJECT_ID = 'project_id'
-    TENANT_ID = 'tenant_id'
     UPDATE_TIMESTAMP = 'update_timestamp'
     SAMPLE_TIMESTAMP = 'sample_timestamp'
     NAME = 'name'
@@ -69,6 +68,12 @@ class SyncMode(object):
     SNAPSHOT = 'snapshot'
     INIT_SNAPSHOT = 'init_snapshot'
     UPDATE = 'update'
+
+
+class UpdateMethod(object):
+    NONE = 'none'
+    PULL = 'pull'
+    PUSH = 'push'
 
 
 class EntityCategory(object):

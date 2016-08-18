@@ -14,11 +14,13 @@
 
 import datetime
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
 from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties as VProps
 from vitrage.datasources.nova.host import NOVA_HOST_DATASOURCE
 from vitrage.datasources.nova.host.transformer import HostTransformer
@@ -34,14 +36,21 @@ LOG = logging.getLogger(__name__)
 
 class TestStaticPhysicalTransformer(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PULL),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=STATIC_PHYSICAL_DATASOURCE)
         cls.transformers[NOVA_HOST_DATASOURCE] = HostTransformer(
-            cls.transformers)
+            cls.transformers, cls.conf)
         cls.transformers[STATIC_PHYSICAL_DATASOURCE] = \
-            StaticPhysicalTransformer(cls.transformers)
+            StaticPhysicalTransformer(cls.transformers, cls.conf)
 
     def test_create_placeholder_vertex(self):
 
@@ -52,7 +61,7 @@ class TestStaticPhysicalTransformer(base.BaseTest):
         switch_type = STATIC_PHYSICAL_DATASOURCE
         switch_name = 'switch-1'
         timestamp = datetime.datetime.utcnow()
-        static_transformer = StaticPhysicalTransformer(self.transformers)
+        static_transformer = self.transformers[STATIC_PHYSICAL_DATASOURCE]
 
         # Test action
         properties = {
@@ -67,7 +76,7 @@ class TestStaticPhysicalTransformer(base.BaseTest):
         observed_id_values = placeholder.vertex_id.split(
             TransformerBase.KEY_SEPARATOR)
         expected_id_values = \
-            StaticPhysicalTransformer(self.transformers)._key_values(
+            self.transformers[STATIC_PHYSICAL_DATASOURCE]._key_values(
                 switch_type, switch_name)
         self.assertEqual(tuple(observed_id_values), expected_id_values)
 
@@ -92,7 +101,7 @@ class TestStaticPhysicalTransformer(base.BaseTest):
         # Test setup
         switch_type = STATIC_PHYSICAL_DATASOURCE
         switch_name = 'switch-1'
-        static_transformer = StaticPhysicalTransformer(self.transformers)
+        static_transformer = self.transformers[STATIC_PHYSICAL_DATASOURCE]
 
         # Test action
         observed_key_fields = static_transformer._key_values(switch_type,
@@ -123,7 +132,7 @@ class TestStaticPhysicalTransformer(base.BaseTest):
 
         for event in events:
             # Test action
-            wrapper = StaticPhysicalTransformer(self.transformers). \
+            wrapper = self.transformers[STATIC_PHYSICAL_DATASOURCE].\
                 transform(event)
 
             # Test assertions

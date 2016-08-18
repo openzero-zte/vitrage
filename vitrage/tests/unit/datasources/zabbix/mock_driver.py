@@ -31,10 +31,6 @@ class MockZabbixDriver(ZabbixDriver):
     def enrich_event(event, event_type):
         pass
 
-    @staticmethod
-    def get_topic(conf):
-        return None
-
     def __init__(self, conf):
         super(MockZabbixDriver, self).__init__(conf)
         self.alarm_datas = None

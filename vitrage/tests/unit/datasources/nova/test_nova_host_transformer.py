@@ -14,6 +14,7 @@
 
 import datetime
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
@@ -21,6 +22,7 @@ from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
 from vitrage.common.constants import EventAction
 from vitrage.common.constants import SyncMode
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties
 from vitrage.datasources.nova.host import NOVA_HOST_DATASOURCE
 from vitrage.datasources.nova.host.transformer import HostTransformer
@@ -37,14 +39,21 @@ LOG = logging.getLogger(__name__)
 # noinspection PyProtectedMember
 class NovaHostTransformerTest(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PUSH),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=NOVA_HOST_DATASOURCE)
         cls.transformers[NOVA_ZONE_DATASOURCE] = ZoneTransformer(
-            cls.transformers)
+            cls.transformers, cls.conf)
         cls.transformers[NOVA_HOST_DATASOURCE] = HostTransformer(
-            cls.transformers)
+            cls.transformers, cls.conf)
 
     def test_create_placeholder_vertex(self):
         LOG.debug('Nova host transformer test: Test create placeholder vertex')
@@ -52,7 +61,7 @@ class NovaHostTransformerTest(base.BaseTest):
         # Test setup
         host_name = 'host123'
         timestamp = datetime.datetime.utcnow()
-        host_transformer = HostTransformer(self.transformers)
+        host_transformer = self.transformers[NOVA_HOST_DATASOURCE]
 
         # Test action
         properties = {
@@ -91,7 +100,7 @@ class NovaHostTransformerTest(base.BaseTest):
 
         # Test setup
         host_name = 'host123456'
-        host_transformer = HostTransformer(self.transformers)
+        host_transformer = self.transformers[NOVA_HOST_DATASOURCE]
 
         # Test action
         observed_key_fields = host_transformer._key_values(
@@ -148,7 +157,7 @@ class NovaHostTransformerTest(base.BaseTest):
         self.assertEqual(edge.source_id, zone.vertex.vertex_id)
         self.assertEqual(
             edge.target_id,
-            HostTransformer(self.transformers)._create_entity_key(event)
+            self.transformers[NOVA_HOST_DATASOURCE]._create_entity_key(event)
         )
         self.assertEqual(edge.label, EdgeLabel.CONTAINS)
 
@@ -194,7 +203,7 @@ class NovaHostTransformerTest(base.BaseTest):
             snap_vals={DSProps.SYNC_MODE: SyncMode.SNAPSHOT})
 
         hosts_events = mock_sync.generate_random_events_list(spec_list)
-        host_transformer = HostTransformer(self.transformers)
+        host_transformer = self.transformers[NOVA_HOST_DATASOURCE]
 
         # Test action
         action = host_transformer._extract_action_type(hosts_events[0])
@@ -209,7 +218,7 @@ class NovaHostTransformerTest(base.BaseTest):
             snapshot_events=1,
             snap_vals={DSProps.SYNC_MODE: SyncMode.INIT_SNAPSHOT})
         hosts_events = mock_sync.generate_random_events_list(spec_list)
-        host_transformer = HostTransformer(self.transformers)
+        host_transformer = self.transformers[NOVA_HOST_DATASOURCE]
 
         # Test action
         action = host_transformer._extract_action_type(hosts_events[0])

@@ -12,4 +12,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-pass
+from oslo_config import cfg
+
+OPTS = [
+    cfg.StrOpt('notifier',
+               default='vitrage.notifier.plugins.nova.'
+                       'nova_notifier.NovaNotifier',
+               help='nova notifier class path',
+               required=True),
+]

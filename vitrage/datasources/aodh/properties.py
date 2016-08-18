@@ -19,6 +19,7 @@ class AodhProperties(object):
     ENABLED = 'enabled'
     EVENT = 'event'
     EVENT_TYPE = 'event_type'
+    EVENT_RESOURCE_ID = 'traits.resource_id'
     NAME = 'name'
     STATE = 'state'
     PROJECT_ID = 'project_id'

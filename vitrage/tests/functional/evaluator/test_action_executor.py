@@ -31,7 +31,7 @@ from vitrage.evaluator.actions.base import ActionType
 from vitrage.evaluator.actions.evaluator_event_transformer import VITRAGE_TYPE
 from vitrage.evaluator.template_data import ActionSpecs
 from vitrage.evaluator.template_fields import TemplateFields as TFields
-from vitrage.service import load_datasource
+from vitrage.opts import register_opts
 from vitrage.tests.functional.base import TestFunctionalBase
 
 LOG = logging.getLogger(__name__)
@@ -47,9 +47,7 @@ class TestActionExecutor(TestFunctionalBase):
         cls.conf.register_opts(cls.DATASOURCES_OPTS, group='datasources')
 
         for datasource_name in cls.conf.datasources.types:
-            load_datasource(cls.conf,
-                            datasource_name,
-                            cls.conf.datasources.path)
+            register_opts(cls.conf, datasource_name, cls.conf.datasources.path)
 
     def test_execute_update_vertex(self):
 

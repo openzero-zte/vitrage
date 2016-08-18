@@ -22,10 +22,6 @@ from vitrage.datasources.neutron.network import NEUTRON_NETWORK_DATASOURCE
 class NetworkDriver(NeutronBase):
 
     @staticmethod
-    def get_topic(conf):
-        return conf[NEUTRON_NETWORK_DATASOURCE].notification_topic
-
-    @staticmethod
     def get_event_types(conf):
         return ['network.create.end',
                 'network.update.end',

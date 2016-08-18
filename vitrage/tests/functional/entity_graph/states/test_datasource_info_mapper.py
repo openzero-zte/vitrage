@@ -46,7 +46,7 @@ class TestDatasourceInfoMapperFunctional(TestFunctionalBase):
         processor.process_event(event)
 
         # test assertions
-        instance_transformer = InstanceTransformer({})
+        instance_transformer = InstanceTransformer({}, self.conf)
         vitrage_id = instance_transformer._create_entity_key(event)
         vertex = processor.entity_graph.get_vertex(vitrage_id)
         self.assertEqual('ACTIVE', vertex[VProps.AGGREGATED_STATE])

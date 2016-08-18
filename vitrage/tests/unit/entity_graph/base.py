@@ -25,7 +25,7 @@ from vitrage.datasources.nova.zone import NOVA_ZONE_DATASOURCE
 from vitrage.entity_graph.initialization_status import InitializationStatus
 from vitrage.entity_graph.processor import processor as proc
 import vitrage.graph.utils as graph_utils
-from vitrage.service import load_datasource
+from vitrage.opts import register_opts
 from vitrage.tests import base
 from vitrage.tests.mocks import mock_driver as mock_sync
 from vitrage.tests.mocks import utils
@@ -63,7 +63,7 @@ class TestEntityGraphUnitBase(base.BaseTest):
     @staticmethod
     def load_datasources(conf):
         for datasource in conf.datasources.types:
-            load_datasource(conf, datasource, conf.datasources.path)
+            register_opts(conf, datasource, conf.datasources.path)
 
     def _create_processor_with_graph(self, conf, processor=None):
         events = self._create_mock_events()

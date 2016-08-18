@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from vitrage.common.constants import UpdateMethod
 
 NAGIOS_DATASOURCE = 'nagios'
 
@@ -26,11 +27,17 @@ OPTS = [
                default='vitrage.datasources.nagios.driver.NagiosDriver',
                help='Nagios driver class path',
                required=True),
+    cfg.StrOpt('update_method',
+               default=UpdateMethod.PULL,
+               help='None: updates only via Vitrage periodic snapshots.'
+                    'Pull: updates every [changes_interval] seconds.'
+                    'Push: updates by getting notifications from the'
+                    ' datasource itself.',
+               required=True),
     cfg.IntOpt('changes_interval',
                default=30,
                min=30,
-               help='interval between checking changes in nagios data source',
-               required=True),
+               help='interval between checking changes in nagios data source'),
     cfg.StrOpt('user', default='nagiosadmin',
                help='Nagios user name'),
     cfg.StrOpt('password', default='nagiosadmin',

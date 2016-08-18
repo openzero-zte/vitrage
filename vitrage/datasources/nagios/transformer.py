@@ -20,6 +20,7 @@ from vitrage.common.constants import EntityCategory
 from vitrage.common.constants import VertexProperties as VProps
 from vitrage.common import datetime_utils
 from vitrage.datasources.alarm_transformer_base import AlarmTransformerBase
+from vitrage.datasources.nagios import NAGIOS_DATASOURCE
 from vitrage.datasources.nagios.properties import NagiosProperties
 from vitrage.datasources.nagios.properties import NagiosTestStatus
 from vitrage.datasources.nova.host import NOVA_HOST_DATASOURCE
@@ -33,8 +34,8 @@ LOG = logging.getLogger(__name__)
 
 class NagiosTransformer(AlarmTransformerBase):
 
-    def __init__(self, transformers):
-        super(NagiosTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(NagiosTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
         return self._create_vertex(entity_event)
@@ -129,3 +130,6 @@ class NagiosTransformer(AlarmTransformerBase):
         return tbase.build_key(self._key_values(sync_type,
                                                 resource_name,
                                                 alarm_name))
+
+    def get_type(self):
+        return NAGIOS_DATASOURCE

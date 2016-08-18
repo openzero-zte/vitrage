@@ -35,8 +35,8 @@ class ZoneTransformer(ResourceTransformerBase):
     STATE_AVAILABLE = 'available'
     STATE_UNAVAILABLE = 'unavailable'
 
-    def __init__(self, transformers):
-        super(ZoneTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(ZoneTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
 
@@ -150,3 +150,6 @@ class ZoneTransformer(ResourceTransformerBase):
 
         key_fields = self._key_values(NOVA_ZONE_DATASOURCE, zone_name)
         return tbase.build_key(key_fields)
+
+    def get_type(self):
+        return NOVA_ZONE_DATASOURCE

@@ -15,6 +15,7 @@
 
 import itertools
 import os
+from oslo_log import log
 from oslo_utils import importutils
 
 import vitrage.api
@@ -25,6 +26,8 @@ import vitrage.evaluator
 import vitrage.keystone_client
 import vitrage.notifier
 import vitrage.rpc
+
+LOG = log.getLogger(__name__)
 
 DATASOURCES_PATH = 'vitrage.datasources.'
 DATASOURCE_FS_PATH = os.path.join('vitrage', 'datasources')
@@ -76,3 +79,20 @@ def _filter_folders_containing_transformer(folders):
 def _normalize_path_to_datasource_name(path_list, top=os.getcwd()):
     return [os.path.relpath(path, os.path.join(top, DATASOURCE_FS_PATH))
             .replace(os.sep, '.') for path in path_list]
+
+
+def register_opts(conf, package_name, paths):
+    """register opts of package package_name, with base path in paths"""
+    for path in paths:
+        try:
+            opt = importutils.import_module(
+                "%s.%s" % (path, package_name)).OPTS
+            conf.register_opts(
+                list(opt),
+                group=None if package_name == 'DEFAULT' else package_name
+            )
+            return
+        except ImportError:
+            pass
+
+    LOG.error("Failed to register config options for %s" % package_name)

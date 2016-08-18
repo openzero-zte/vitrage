@@ -16,11 +16,10 @@ import logging
 from oslo_config import cfg
 from oslo_log import log
 from oslo_policy import opts as policy_opts
-from oslo_utils import importutils
-
 from vitrage import keystone_client
 from vitrage import messaging
 from vitrage import opts
+from vitrage.opts import register_opts
 
 LOG = log.getLogger(__name__)
 
@@ -39,7 +38,7 @@ def prepare_service(args=None, conf=None, config_files=None):
          default_config_files=config_files)
 
     for datasource in conf.datasources.types:
-        load_datasource(conf, datasource, conf.datasources.path)
+        register_opts(conf, datasource, conf.datasources.path)
 
     keystone_client.register_keystoneauth_opts(conf)
 
@@ -49,16 +48,3 @@ def prepare_service(args=None, conf=None, config_files=None):
     messaging.setup()
 
     return conf
-
-
-def load_datasource(conf, name, paths):
-    for path in paths:
-        try:
-            opt = importutils.import_module("%s.%s" % (path, name)).OPTS
-            conf.register_opts(list(opt),
-                               group=None if name == 'DEFAULT' else name)
-            return
-        except ImportError:
-            pass
-
-    LOG.error("Failed to register config options for plugin %s" % name)

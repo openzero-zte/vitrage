@@ -337,7 +337,7 @@ class TemplateContentValidatorTest(base.BaseTest):
     def _test_assert_with_fault_result(self, result, status_code):
 
         self.assertFalse(result.is_valid)
-        self.assertEqual(result.comment, status_msgs[status_code])
+        self.assertTrue(result.comment.startswith(status_msgs[status_code]))
         self.assertEqual(result.status_code, status_code)
 
     def _test_execute_and_assert_with_correct_result(self, template):

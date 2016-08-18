@@ -17,4 +17,7 @@ from oslo_config import cfg
 OPTS = [
     cfg.ListOpt('notifiers',
                 help='Names of enabled notifiers (example aodh, nova)'),
+    cfg.ListOpt('notifiers_path',
+                default=['vitrage.notifier.plugins'],
+                help='list of base path for notifiers'),
 ]

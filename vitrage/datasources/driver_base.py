@@ -113,25 +113,3 @@ class DriverBase(object):
         """
 
         return []
-
-    @staticmethod
-    @abc.abstractmethod
-    def get_topic(conf):
-        """Return the topic of events processed by this driver
-
-        Example:
-        to listen to nova topic, add another topic to nova.conf so nova will
-        notify the notifications to another queue.
-
-        example of nova.conf:
-         notification_topics = notifications,new_topic
-
-        example of get_topic():
-         return 'new_topic'
-
-        :param conf: the datasource's configuration
-        :return: the topic of the datasource
-        :rtype: str
-        """
-
-        return None

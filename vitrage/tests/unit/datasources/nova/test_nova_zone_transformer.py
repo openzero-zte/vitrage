@@ -14,11 +14,13 @@
 
 import datetime
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
 from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties
 from vitrage.datasources.nova.host import NOVA_HOST_DATASOURCE
 from vitrage.datasources.nova.host.transformer import HostTransformer
@@ -36,14 +38,21 @@ LOG = logging.getLogger(__name__)
 # noinspection PyProtectedMember
 class NovaZoneTransformerTest(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PUSH),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=NOVA_ZONE_DATASOURCE)
         cls.transformers[NOVA_HOST_DATASOURCE] = \
-            HostTransformer(cls.transformers)
+            HostTransformer(cls.transformers, cls.conf)
         cls.transformers[NOVA_ZONE_DATASOURCE] = \
-            ZoneTransformer(cls.transformers)
+            ZoneTransformer(cls.transformers, cls.conf)
 
     def test_create_placeholder_vertex(self):
 
@@ -52,7 +61,7 @@ class NovaZoneTransformerTest(base.BaseTest):
         # Test setup
         zone_name = 'zone123'
         timestamp = datetime.datetime.utcnow()
-        zone_transformer = ZoneTransformer(self.transformers)
+        zone_transformer = self.transformers[NOVA_ZONE_DATASOURCE]
 
         # Test action
         properties = {
@@ -65,8 +74,8 @@ class NovaZoneTransformerTest(base.BaseTest):
         # Test assertions
         observed_id_values = placeholder.vertex_id.split(
             TransformerBase.KEY_SEPARATOR)
-        expected_id_values = ZoneTransformer(self.transformers)._key_values(
-            NOVA_ZONE_DATASOURCE, zone_name)
+        expected_id_values = self.transformers[NOVA_ZONE_DATASOURCE].\
+            _key_values(NOVA_ZONE_DATASOURCE, zone_name)
         self.assertEqual(tuple(observed_id_values), expected_id_values)
 
         observed_time = placeholder.get(VertexProperties.SAMPLE_TIMESTAMP)
@@ -89,7 +98,7 @@ class NovaZoneTransformerTest(base.BaseTest):
 
         # Test setup
         zone_name = 'zone123'
-        zone_transformer = ZoneTransformer(self.transformers)
+        zone_transformer = self.transformers[NOVA_ZONE_DATASOURCE]
 
         # Test action
         observed_key_fields = zone_transformer._key_values(
@@ -204,7 +213,7 @@ class NovaZoneTransformerTest(base.BaseTest):
 
     def _validate_vertex_props(self, vertex, event):
 
-        zone_transform = ZoneTransformer(self.transformers)
+        zone_transform = self.transformers[NOVA_ZONE_DATASOURCE]
 
         extract_value = tbase.extract_field_value
 

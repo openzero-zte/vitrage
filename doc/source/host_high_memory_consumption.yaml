@@ -1,5 +1,5 @@
 metadata:
- id: host_high_memory_consumption
+ name: host_high_memory_consumption
 definitions:
  entities:
   - entity:

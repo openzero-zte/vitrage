@@ -39,8 +39,8 @@ class InstanceTransformer(ResourceTransformerBase):
         'compute.instance.delete.end': EventAction.DELETE_ENTITY,
     }
 
-    def __init__(self, transformers):
-        super(InstanceTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(InstanceTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
 
@@ -62,7 +62,7 @@ class InstanceTransformer(ResourceTransformerBase):
 
         metadata = {
             VProps.NAME: name,
-            VProps.TENANT_ID: entity_event.get(VProps.TENANT_ID, None),
+            VProps.PROJECT_ID: entity_event.get('tenant_id', None),
         }
 
         sample_timestamp = entity_event[DSProps.SAMPLE_DATE]
@@ -134,3 +134,6 @@ class InstanceTransformer(ResourceTransformerBase):
             relationship_type=EdgeLabel.CONTAINS)
 
         return Neighbor(host_vertex, relationship_edge)
+
+    def get_type(self):
+        return NOVA_INSTANCE_DATASOURCE

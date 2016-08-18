@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from vitrage.common.constants import UpdateMethod
 
 ZABBIX_DATASOURCE = 'zabbix'
 
@@ -26,11 +27,17 @@ OPTS = [
                default='vitrage.datasources.zabbix.driver.ZabbixDriver',
                help='Zabbix driver class path',
                required=True),
+    cfg.StrOpt('update_method',
+               default=UpdateMethod.PUSH,
+               help='None: updates only via Vitrage periodic snapshots.'
+                    'Pull: updates every [changes_interval] seconds.'
+                    'Push: updates by getting notifications from the'
+                    ' datasource itself.',
+               required=True),
     cfg.IntOpt('changes_interval',
                default=30,
-               min=30,
-               help='interval between checking changes in zabbix data source',
-               required=True),
+               min=10,
+               help='interval between checking changes in zabbix data source'),
     cfg.StrOpt('user', default='admin',
                help='Zabbix user name'),
     cfg.StrOpt('password', default='zabbix',
@@ -39,7 +46,4 @@ OPTS = [
                help='Zabbix url'),
     cfg.StrOpt('config_file', default='/etc/vitrage/zabbix_conf.yaml',
                help='Zabbix configuration file'),
-    cfg.StrOpt('notification_topic',
-               default='vitrage_notifications',
-               help='Zabbix configured notifications topic for Vitrage'),
 ]

@@ -7,11 +7,11 @@ Consolidate Zabbix alerts from across multiple sites into a single "at-a-glance"
 Installation
 ------------
 
-Copy the `zabbix_vitrage.py` script into the Zabbix servers' `AlertScriptsPath` directory which is by default `/etc/zabbix/alertscripts` and make it executable:
+Copy the `zabbix_vitrage.py` script into the Zabbix servers' `AlertScriptsPath` directory which is by default `/usr/lib/zabbix/alertscripts` and make it executable:
 
 | $ wget https://github.com/openstack/vitrage/tree/master/vitrage/datasources/zabbix/auxiliary/zabbix_vitrage.py
-| $ cp zabbix_vitrage.py /etc/zabbix/alertscripts/
-| $ chmod 755 /etc/zabbix/alertscripts/zabbix_vitrage.py
+| $ cp zabbix_vitrage.py /usr/lib/zabbix/alertscripts/
+| $ chmod 755 /usr/lib/zabbix/alertscripts/zabbix_vitrage.py
 
 Configuration
 -------------
@@ -48,7 +48,7 @@ To forward zabbix events to Vitrage a new media script needs to be created and a
           | host={HOST.NAME1}
           | hostid={HOST.ID1}
           | hostip={HOST.IP1}
-          | id={TRIGGER.ID}
+          | triggerid={TRIGGER.ID}
           | description={TRIGGER.NAME}
           | rawtext={TRIGGER.NAME.ORIG}
           | expression={TRIGGER.EXPRESSION}

@@ -17,11 +17,12 @@ import itertools
 
 from oslo_service import service as os_service
 from oslo_utils import importutils as utils
+from vitrage.common.constants import UpdateMethod
+from vitrage.common.utils import opt_exists
 from vitrage.datasources.listener_service import ListenerService
 
-from services import ChangesService
-from services import SnapshotsService
-from vitrage.common.utils import opt_exists
+from vitrage.datasources.services import ChangesService
+from vitrage.datasources.services import SnapshotsService
 
 CHANGES_INTERVAL = 'changes_interval'
 
@@ -37,7 +38,7 @@ class Launcher(object):
     def __init__(self, conf, callback):
         self.conf = conf
         self.callback = callback
-        self.snapshot_datasources = self._register_snapshot_datasources()
+        self.snapshot_datasources = self._register_snapshot_datasources(conf)
         self.services = self._register_services()
 
     def launch(self):
@@ -45,25 +46,34 @@ class Launcher(object):
         for service in self.services:
             launcher.launch_service(service, 1)
 
-    def _register_snapshot_datasources(self):
-        return {plugin: utils.import_object(self.conf[plugin].driver,
-                                            self.conf)
-                for plugin in self.conf.datasources.types}
+    @staticmethod
+    def _register_snapshot_datasources(conf):
+        return {datasource: utils.import_object(conf[datasource].driver, conf)
+                for datasource in conf.datasources.types}
 
     def _register_services(self):
-        return itertools.chain(
+        pull_datasources = self._get_pull_datasources(self.conf)
+        changes_services = \
             (ChangesService(self.conf,
-                            [self.snapshot_datasources[plugin]],
-                            self.conf[plugin].changes_interval,
+                            [self.snapshot_datasources[datasource]],
+                            self.conf[datasource].changes_interval,
                             self.callback)
+             for datasource in pull_datasources)
 
-                for plugin in self.conf.datasources.types
-                if opt_exists(self.conf[plugin], CHANGES_INTERVAL)),
+        snapshot_service = (SnapshotsService(self.conf,
+                                             self.snapshot_datasources,
+                                             self.callback),)
 
-            (SnapshotsService(self.conf,
-                              self.snapshot_datasources,
-                              self.callback),),
+        listener_service = (ListenerService(self.conf,
+                                            self.snapshot_datasources,
+                                            self.callback),)
 
-            (ListenerService(self.conf,
-                             self.snapshot_datasources,
-                             self.callback),),)
+        return itertools.chain(changes_services,
+                               snapshot_service,
+                               listener_service)
+
+    @staticmethod
+    def _get_pull_datasources(conf):
+        return (datasource for datasource in conf.datasources.types
+                if conf[datasource].update_method.lower() == UpdateMethod.PULL
+                and opt_exists(conf[datasource], CHANGES_INTERVAL))

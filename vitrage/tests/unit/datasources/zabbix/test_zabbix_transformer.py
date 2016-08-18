@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
@@ -19,6 +20,7 @@ from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
 from vitrage.common.constants import EventAction
 from vitrage.common.constants import SyncMode
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties as VProps
 from vitrage.common.datetime_utils import format_unix_timestamp
 from vitrage.datasources.alarm_properties import AlarmProperties as AlarmProps
@@ -31,6 +33,7 @@ from vitrage.datasources.zabbix.properties import ZabbixProperties\
 from vitrage.datasources.zabbix.properties import ZabbixTriggerSeverity
 from vitrage.datasources.zabbix.properties import ZabbixTriggerValue
 from vitrage.datasources.zabbix.transformer import ZabbixTransformer
+from vitrage.datasources.zabbix import ZABBIX_DATASOURCE
 from vitrage.tests import base
 from vitrage.tests.mocks import mock_driver as mock_sync
 
@@ -41,12 +44,19 @@ LOG = logging.getLogger(__name__)
 # noinspection PyProtectedMember
 class ZabbixTransformerTest(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PULL),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
-        host_transformer = HostTransformer(cls.transformers)
-        cls.transformers[NOVA_HOST_DATASOURCE] = host_transformer
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=ZABBIX_DATASOURCE)
+        cls.transformers[NOVA_HOST_DATASOURCE] = \
+            HostTransformer(cls.transformers, cls.conf)
 
     def test_extract_key(self):
         LOG.debug('Test get key from nova instance transformer')
@@ -55,7 +65,7 @@ class ZabbixTransformerTest(base.BaseTest):
         spec_list = mock_sync.simple_zabbix_alarm_generators(host_num=1,
                                                              events_num=1)
         zabbix_alarms = mock_sync.generate_sequential_events_list(spec_list)
-        transformer = ZabbixTransformer(self.transformers)
+        transformer = ZabbixTransformer(self.transformers, self.conf)
         event = zabbix_alarms[0]
         self.enrich_event(event)
 
@@ -70,7 +80,7 @@ class ZabbixTransformerTest(base.BaseTest):
         self.assertEqual(event[DSProps.SYNC_TYPE], observed_key_fields[1])
         self.assertEqual(event[ZabbixProps.RESOURCE_NAME],
                          observed_key_fields[2])
-        self.assertEqual(event[ZabbixProps.DESCRIPTION],
+        self.assertEqual(event[ZabbixProps.TRIGGER_ID],
                          observed_key_fields[3])
 
     def test_zabbix_alarm_transform(self):
@@ -84,7 +94,8 @@ class ZabbixTransformerTest(base.BaseTest):
         for alarm in zabbix_alarms:
             # Test action
             self.enrich_event(alarm, format_timestamp=False)
-            wrapper = ZabbixTransformer(self.transformers).transform(alarm)
+            wrapper = ZabbixTransformer(self.transformers, self.conf)\
+                .transform(alarm)
             self._validate_vertex(wrapper.vertex, alarm)
 
             neighbors = wrapper.neighbors
@@ -151,8 +162,8 @@ class ZabbixTransformerTest(base.BaseTest):
         edge = neighbor.edge
         self.assertEqual(EdgeLabel.ON, edge.label)
 
-        alarm_key = \
-            ZabbixTransformer(self.transformers)._create_entity_key(event)
+        alarm_key = ZabbixTransformer(self.transformers, self.conf).\
+            _create_entity_key(event)
         self.assertEqual(alarm_key, edge.source_id)
         self.assertEqual(host_vertex.vertex_id, edge.target_id)
 

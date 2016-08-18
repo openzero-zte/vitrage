@@ -21,6 +21,7 @@ from vitrage.common.constants import VertexProperties as VProps
 from vitrage.datasources.nova.host import NOVA_HOST_DATASOURCE
 from vitrage.datasources.resource_transformer_base import \
     ResourceTransformerBase
+from vitrage.datasources.static_physical import STATIC_PHYSICAL_DATASOURCE
 from vitrage.datasources.static_physical import SWITCH
 from vitrage.datasources import transformer_base
 from vitrage.datasources.transformer_base import Neighbor
@@ -39,8 +40,8 @@ class StaticPhysicalTransformer(ResourceTransformerBase):
         EventAction.DELETE_ENTITY: EventAction.DELETE_ENTITY
     }
 
-    def __init__(self, transformers):
-        super(StaticPhysicalTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(StaticPhysicalTransformer, self).__init__(transformers, conf)
         self._register_relations_direction()
 
     def _create_snapshot_entity_vertex(self, entity_event):
@@ -146,3 +147,6 @@ class StaticPhysicalTransformer(ResourceTransformerBase):
 
         relationship = (SWITCH, SWITCH)
         self.relation_direction[relationship] = True
+
+    def get_type(self):
+        return STATIC_PHYSICAL_DATASOURCE

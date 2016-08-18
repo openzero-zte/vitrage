@@ -43,8 +43,8 @@ class NetworkTransformer(ResourceTransformerBase):
         'network.delete.end': EventAction.DELETE_ENTITY,
     }
 
-    def __init__(self, transformers):
-        super(NetworkTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(NetworkTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
 
@@ -52,12 +52,14 @@ class NetworkTransformer(ResourceTransformerBase):
         entity_id = entity_event['id']
         state = entity_event['status']
         update_timestamp = entity_event['updated_at']
+        project_id = entity_event.get('tenant_id', None)
 
         return self._create_vertex(entity_event,
                                    name,
                                    entity_id,
                                    state,
-                                   update_timestamp)
+                                   update_timestamp,
+                                   project_id)
 
     def _create_update_entity_vertex(self, entity_event):
 
@@ -68,23 +70,26 @@ class NetworkTransformer(ResourceTransformerBase):
             extract_field_value(entity_event, 'network', 'updated_at')
         entity_id = extract_field_value(entity_event,
                                         *self.UPDATE_ID_PROPERTY[event_type])
+        project_id = extract_field_value(entity_event, 'network', 'tenant_id')
 
         return self._create_vertex(entity_event,
                                    name,
                                    entity_id,
                                    state,
-                                   update_timestamp)
+                                   update_timestamp,
+                                   project_id)
 
     def _create_vertex(self,
                        entity_event,
                        name,
                        entity_id,
                        state,
-                       update_timestamp):
+                       update_timestamp,
+                       project_id):
 
         metadata = {
             VProps.NAME: name,
-            VProps.TENANT_ID: entity_event.get(VProps.TENANT_ID, None),
+            VProps.PROJECT_ID: project_id,
         }
 
         sample_timestamp = entity_event[DSProps.SAMPLE_DATE]
@@ -106,3 +111,6 @@ class NetworkTransformer(ResourceTransformerBase):
 
         key_fields = self._key_values(NEUTRON_NETWORK_DATASOURCE, network_id)
         return tbase.build_key(key_fields)
+
+    def get_type(self):
+        return NEUTRON_NETWORK_DATASOURCE

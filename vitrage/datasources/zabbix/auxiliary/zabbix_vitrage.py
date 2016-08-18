@@ -19,6 +19,7 @@
 import argparse
 from datetime import datetime
 import logging
+from logging.handlers import RotatingFileHandler
 from oslo_config import cfg
 import oslo_messaging as messaging
 import six
@@ -36,7 +37,7 @@ Message:
     host={HOST.NAME1}
     hostid={HOST.ID1}
     hostip={HOST.IP1}
-    id={TRIGGER.ID}
+    triggerid={TRIGGER.ID}
     description={TRIGGER.NAME}
     rawtext={TRIGGER.NAME.ORIG}
     expression={TRIGGER.EXPRESSION}
@@ -47,6 +48,7 @@ Message:
 
 
 LOG_FILE = '/var/log/zabbix/zabbix_vitrage.log'
+LOG_MAX_SIZE = 10240
 LOG_FORMAT = '%(asctime)s.%(msecs).03d %(name)s[%(process)d] %(threadName)s %' \
              '(levelname)s - %(message)s'
 LOG_DATE_FMT = '%Y.%m.%d %H:%M:%S'
@@ -68,16 +70,15 @@ def main():
 
     transport_url = args.sendto
     transport = messaging.get_transport(cfg.CONF, transport_url)
-    driver = 'messaging'
+    driver = 'messagingv2'
+    publisher = 'zabbix_%s' % socket.gethostname()
     notifier = messaging.Notifier(transport,
                                   driver=driver,
-                                  publisher_id='zabbix',
+                                  publisher_id=publisher,
                                   topic='vitrage_notifications')
 
     alarm_status = args.topic.lower()
     event_type = '%s.%s' % (ZABBIX_EVENT_TYPE, alarm_status)
-
-    publisher = 'zabbix_%s' % socket.gethostname()
 
     payload = {key.lower().strip(): prop.strip() for key, prop in
                (line.split('=') for line in args.body.splitlines())}
@@ -99,5 +100,9 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT,
                             datefmt=LOG_DATE_FMT, level=logging.DEBUG)
-
+    log = logging.getLogger()
+    handler = RotatingFileHandler(filename=LOG_FILE,
+                                  maxBytes=LOG_MAX_SIZE,
+                                  backupCount=1)
+    log.addHandler(handler)
     main()

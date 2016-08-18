@@ -24,7 +24,9 @@ import vitrage.common.constants as cons
 from vitrage.common.constants import DatasourceProperties as DSProps
 from vitrage.common.constants import EventAction
 from vitrage.common.constants import SyncMode
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.exception import VitrageTransformerError
+from vitrage.common import utils
 from vitrage.datasources import OPENSTACK_CLUSTER
 import vitrage.graph.utils as graph_utils
 
@@ -96,7 +98,8 @@ class TransformerBase(object):
 
     UPDATE_EVENT_TYPES = {}
 
-    def __init__(self, transformers):
+    def __init__(self, transformers, conf):
+        self.conf = conf
         self.transformers = transformers
 
     def transform(self, entity_event):
@@ -125,9 +128,19 @@ class TransformerBase(object):
                                  EventAction.END_MESSAGE)
 
     def _create_entity_vertex(self, entity_event):
-
-        if is_update_event(entity_event):
-            return self._create_update_entity_vertex(entity_event)
+        if is_update_event(entity_event) and \
+                utils.opt_exists(self.conf, self.get_type()) and \
+                utils.opt_exists(self.conf[self.get_type()], 'update_method'):
+            update_method = self.conf[self.get_type()].update_method.lower()
+            if update_method == UpdateMethod.PUSH:
+                return self._create_update_entity_vertex(entity_event)
+            elif update_method == UpdateMethod.PULL:
+                return self._create_snapshot_entity_vertex(entity_event)
+            elif update_method == UpdateMethod.NONE:
+                return None
+            else:
+                LOG.error('Update event arrived for dataresource that is '
+                          'defined without updates')
         else:
             return self._create_snapshot_entity_vertex(entity_event)
 
@@ -259,3 +272,12 @@ class TransformerBase(object):
           To contain the list of all the vertices with type=nova.instance
         """
         return None
+
+    @abc.abstractmethod
+    def get_type(self):
+        """Returns the type of the datasource
+
+        :return: datasource type
+        :rtype: String
+        """
+        pass

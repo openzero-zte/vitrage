@@ -22,14 +22,14 @@ class ZabbixBaseTest(base.BaseTest):
         for alarm in alarms:
             if alarm[ZabbixProps.RESOURCE_NAME] == \
                 expected_serv[ZabbixProps.RESOURCE_NAME] and \
-                    alarm[ZabbixProps.DESCRIPTION] == \
-                    expected_serv[ZabbixProps.DESCRIPTION]:
+                    alarm[ZabbixProps.TRIGGER_ID] == \
+                    expected_serv[ZabbixProps.TRIGGER_ID]:
                 self._assert_expected_alarm(expected_serv, alarm)
                 return
 
         self.fail("alarm not found: %s %s" %
                   (expected_serv[ZabbixProps.RESOURCE_NAME],
-                   expected_serv[ZabbixProps.DESCRIPTION]))
+                   expected_serv[ZabbixProps.TRIGGER_ID]))
 
     def _assert_expected_alarm(self, expected_alarm, alarm):
         for key, value in expected_alarm.items():

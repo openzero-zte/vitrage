@@ -14,11 +14,13 @@
 
 import datetime
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
 from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties as VProps
 from vitrage.datasources.cinder.volume import CINDER_VOLUME_DATASOURCE
 from vitrage.datasources.cinder.volume.transformer \
@@ -35,14 +37,21 @@ LOG = logging.getLogger(__name__)
 
 class TestCinderVolumeTransformer(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PUSH),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=CINDER_VOLUME_DATASOURCE)
         cls.transformers[CINDER_VOLUME_DATASOURCE] = \
-            CinderVolumeTransformer(cls.transformers)
+            CinderVolumeTransformer(cls.transformers, cls.conf)
         cls.transformers[NOVA_INSTANCE_DATASOURCE] = \
-            InstanceTransformer(cls.transformers)
+            InstanceTransformer(cls.transformers, cls.conf)
 
     def test_create_placeholder_vertex(self):
         LOG.debug('Cinder Volume transformer test: Create placeholder '
@@ -56,7 +65,7 @@ class TestCinderVolumeTransformer(base.BaseTest):
             VProps.TYPE: CINDER_VOLUME_DATASOURCE,
             VProps.SAMPLE_TIMESTAMP: timestamp
         }
-        transformer = CinderVolumeTransformer(self.transformers)
+        transformer = self.transformers[CINDER_VOLUME_DATASOURCE]
 
         # Test action
         placeholder = transformer.create_placeholder_vertex(**properties)
@@ -89,7 +98,7 @@ class TestCinderVolumeTransformer(base.BaseTest):
         # Test setup
         volume_type = CINDER_VOLUME_DATASOURCE
         volume_id = '12345'
-        transformer = CinderVolumeTransformer(self.transformers)
+        transformer = self.transformers[CINDER_VOLUME_DATASOURCE]
 
         # Test action
         observed_key_fields = transformer._key_values(volume_type,

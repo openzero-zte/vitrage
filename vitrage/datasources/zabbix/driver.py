@@ -32,7 +32,7 @@ LOG = log.getLogger(__name__)
 
 
 class ZabbixDriver(AlarmDriverBase):
-    ServiceKey = namedtuple('ServiceKey', ['host_name', 'service'])
+    ServiceKey = namedtuple('ServiceKey', ['hostname', 'triggerid'])
     conf_map = None
 
     def __init__(self, conf):
@@ -47,8 +47,8 @@ class ZabbixDriver(AlarmDriverBase):
         return ZABBIX_DATASOURCE
 
     def _alarm_key(self, alarm):
-        return self.ServiceKey(host_name=alarm[ZProps.RESOURCE_NAME],
-                               service=alarm[ZProps.DESCRIPTION])
+        return self.ServiceKey(hostname=alarm[ZProps.RESOURCE_NAME],
+                               triggerid=alarm[ZProps.TRIGGER_ID])
 
     def _get_alarms(self):
         zabbix_user = self.conf.zabbix.user
@@ -90,7 +90,6 @@ class ZabbixDriver(AlarmDriverBase):
 
         for trigger in triggers:
             trigger[ZProps.ZABBIX_RESOURCE_NAME] = host[ZProps.HOST]
-
             trigger_id = trigger[ZProps.TRIGGER_ID]
             trigger[ZProps.RAWTEXT] = triggers_rawtexts[trigger_id]
             alarms.append(trigger)
@@ -118,12 +117,7 @@ class ZabbixDriver(AlarmDriverBase):
             zabbix_host = alarm[ZProps.ZABBIX_RESOURCE_NAME]
             vitrage_host = ZabbixDriver.conf_map[zabbix_host]
             alarm[ZProps.RESOURCE_TYPE] = vitrage_host[ZProps.RESOURCE_TYPE]
-
-            vitrage_host_name = vitrage_host[ZProps.RESOURCE_NAME]
             alarm[ZProps.RESOURCE_NAME] = vitrage_host[ZProps.RESOURCE_NAME]
-            alarm[ZProps.DESCRIPTION] = alarm[ZProps.DESCRIPTION].replace(
-                zabbix_host,
-                vitrage_host_name)
 
     def _is_erroneous(self, alarm):
         return alarm and \
@@ -138,7 +132,11 @@ class ZabbixDriver(AlarmDriverBase):
             return True
 
         if new_alarm[ZProps.VALUE] == TriggerValue.PROBLEM:
-            return new_alarm[ZProps.PRIORITY] != old_alarm[ZProps.PRIORITY]
+            priority_changed = \
+                new_alarm[ZProps.PRIORITY] != old_alarm[ZProps.PRIORITY]
+            description_changed = \
+                new_alarm[ZProps.DESCRIPTION] != old_alarm[ZProps.DESCRIPTION]
+            return priority_changed or description_changed
 
     def _is_valid(self, alarm):
         return alarm[ZProps.RESOURCE_TYPE] is not None and \
@@ -175,6 +173,7 @@ class ZabbixDriver(AlarmDriverBase):
 
         if ZabbixDriver.conf_map:
             zabbix_host = event[ZProps.HOST]
+            event[ZProps.ZABBIX_RESOURCE_NAME] = zabbix_host
             v_resource = ZabbixDriver.conf_map[zabbix_host]
             event[ZProps.RESOURCE_NAME] = v_resource[ZProps.RESOURCE_NAME]
             event[ZProps.RESOURCE_TYPE] = v_resource[ZProps.RESOURCE_TYPE]
@@ -185,7 +184,3 @@ class ZabbixDriver(AlarmDriverBase):
     @staticmethod
     def get_event_types(conf):
         return ['zabbix.alarm.ok', 'zabbix.alarm.problem']
-
-    @staticmethod
-    def get_topic(conf):
-        return conf[ZABBIX_DATASOURCE].notification_topic

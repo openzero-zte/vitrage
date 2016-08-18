@@ -27,7 +27,6 @@ OPENSTACK_CLUSTER = 'openstack.cluster'
 
 # Register options for the service
 OPTS = [
-
     cfg.ListOpt('types',
                 default=[NOVA_HOST_DATASOURCE,
                          NOVA_INSTANCE_DATASOURCE,
@@ -44,5 +43,8 @@ OPTS = [
     cfg.IntOpt('snapshots_interval',
                default=600,
                min=10,
-               help='interval between full snapshots')
+               help='interval between full snapshots'),
+    cfg.StrOpt('notification_topic',
+               default='vitrage_notifications',
+               help='Vitrage configured notifications topic')
 ]

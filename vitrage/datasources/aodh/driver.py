@@ -64,7 +64,7 @@ class AodhDriver(AlarmDriverBase):
         res = cls._convert_base_alarm(alarm)
         res[AodhProps.EVENT_TYPE] = alarm.event_rule[AodhProps.EVENT_TYPE],
         res[AodhProps.RESOURCE_ID] = _parse_query(alarm.event_rule,
-                                                  AodhProps.RESOURCE_ID)
+                                                  AodhProps.EVENT_RESOURCE_ID)
         return res
 
     @classmethod

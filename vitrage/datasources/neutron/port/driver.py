@@ -22,10 +22,6 @@ from vitrage.datasources.neutron.port import NEUTRON_PORT_DATASOURCE
 class PortDriver(NeutronBase):
 
     @staticmethod
-    def get_topic(conf):
-        return conf[NEUTRON_PORT_DATASOURCE].notification_topic
-
-    @staticmethod
     def get_event_types(conf):
         return ['port.create.end',
                 'port.update.end',

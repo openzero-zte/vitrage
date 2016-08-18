@@ -11,6 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
 import copy
 
 from oslo_config import cfg
@@ -47,11 +48,11 @@ class ZabbixDriverTest(ZabbixBaseTest):
         # Test Setup
         zabbix_driver = MockZabbixDriver(self.conf)
 
-        alarm_data1 = self._extract_alarm_data(description='CPU 1', status='1')
-        alarm_data2 = self._extract_alarm_data(description='CPU 2', status='1',
+        alarm_data1 = self._extract_alarm_data(triggerid='1', status='1')
+        alarm_data2 = self._extract_alarm_data(triggerid='2', status='1',
                                                value='1')
-        alarm_data3 = self._extract_alarm_data(description='CPU 3', value='1')
-        alarm_data4 = self._extract_alarm_data(description='CPU 4')
+        alarm_data3 = self._extract_alarm_data(triggerid='3', value='1')
+        alarm_data4 = self._extract_alarm_data(triggerid='4')
 
         zabbix_driver.set_alarm_datas([alarm_data1,
                                        alarm_data2,
@@ -74,7 +75,7 @@ class ZabbixDriverTest(ZabbixBaseTest):
         alarm_data1 = self._extract_alarm_data()
         alarm_data2 = self._extract_alarm_data(z_resource_name='compute-2')
         alarm_data3 = self._extract_alarm_data(z_resource_name='compute-2',
-                                               description='Uptime')
+                                               triggerid='2')
 
         zabbix_driver.set_alarm_datas([alarm_data1, alarm_data2, alarm_data3])
 
@@ -212,7 +213,7 @@ class ZabbixDriverTest(ZabbixBaseTest):
         alarm_data2 = self._extract_alarm_data(z_resource_name='compute-2',
                                                priority='1', value='1')
         alarm_data3 = self._extract_alarm_data(z_resource_name='compute-2',
-                                               description='Uptime',
+                                               triggerid='22222',
                                                priority='1')
 
         zabbix_driver.set_alarm_datas([alarm_data1, alarm_data2, alarm_data3])
@@ -269,7 +270,7 @@ class ZabbixDriverTest(ZabbixBaseTest):
         alarm_data2 = self._extract_alarm_data(z_resource_name='compute-2',
                                                priority='2')
         alarm_data3 = self._extract_alarm_data(z_resource_name='compute-2',
-                                               description='Uptime')
+                                               triggerid='2')
         zabbix_driver.set_alarm_datas([alarm_data1, alarm_data2, alarm_data3])
 
         # Step action
@@ -333,13 +334,13 @@ class ZabbixDriverTest(ZabbixBaseTest):
         self.assertIsNotNone(changed_alarms, 'No alarms returned')
         self.assertEqual(0, len(changed_alarms))
 
-        # Step 5 - get changes
+        # Step 6 - get changes
         # Step setup
         alarm_data2 = self._extract_alarm_data(z_resource_name='compute-2',
                                                priority='4',
                                                value='1')
         alarm_data3 = self._extract_alarm_data(z_resource_name='compute-2',
-                                               description='Uptime',
+                                               triggerid='2',
                                                priority='4',
                                                value='1')
 
@@ -348,7 +349,7 @@ class ZabbixDriverTest(ZabbixBaseTest):
         expected_alarm1 = copy.copy(alarm_data2)
         expected_alarm1[ZProps.RESOURCE_NAME] = 'host2'
         expected_alarm2 = copy.copy(expected_alarm1)
-        expected_alarm2[ZProps.DESCRIPTION] = 'Uptime'
+        expected_alarm2[ZProps.TRIGGER_ID] = '2'
 
         # Step action
         alarms = zabbix_driver._get_changed_alarms()
@@ -365,7 +366,7 @@ class ZabbixDriverTest(ZabbixBaseTest):
         alarm_data1 = self._extract_alarm_data(value='1')
         alarm_data2 = self._extract_alarm_data(z_resource_name='compute-2')
         alarm_data3 = self._extract_alarm_data(z_resource_name='compute-2',
-                                               description='Uptime')
+                                               triggerid='2')
 
         # Step 1 - delete inactive alarm
         # Step setup
@@ -425,11 +426,13 @@ class ZabbixDriverTest(ZabbixBaseTest):
                             description='cpu',
                             status='0',
                             value='0',
-                            priority='1'):
+                            priority='1',
+                            triggerid='0'):
 
         return {ZProps.ZABBIX_RESOURCE_NAME: z_resource_name,
                 ZProps.DESCRIPTION: description,
                 ZProps.STATUS: status,
                 ZProps.VALUE: value,
                 ZProps.PRIORITY: priority,
-                ZProps.RESOURCE_NAME: z_resource_name}
+                ZProps.RESOURCE_NAME: z_resource_name,
+                ZProps.TRIGGER_ID: triggerid}

@@ -33,8 +33,8 @@ LOG = logging.getLogger(__name__)
 
 class HostTransformer(ResourceTransformerBase):
 
-    def __init__(self, transformers):
-        super(HostTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(HostTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
 
@@ -119,3 +119,6 @@ class HostTransformer(ResourceTransformerBase):
 
         key_fields = self._key_values(NOVA_HOST_DATASOURCE, host_name)
         return transformer_base.build_key(key_fields)
+
+    def get_type(self):
+        return NOVA_HOST_DATASOURCE

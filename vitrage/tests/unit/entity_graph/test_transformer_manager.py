@@ -24,7 +24,7 @@ from vitrage.datasources.nova.instance.transformer import InstanceTransformer
 from vitrage.datasources.nova.zone import NOVA_ZONE_DATASOURCE
 from vitrage.datasources.nova.zone.transformer import ZoneTransformer
 from vitrage.entity_graph.transformer_manager import TransformerManager
-from vitrage.service import load_datasource
+from vitrage.opts import register_opts
 from vitrage.tests import base
 
 LOG = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class TransformerManagerTest(base.BaseTest):
         cls.conf.register_opts(cls.OPTS, group='datasources')
 
         for datasource in cls.conf.datasources.types:
-            load_datasource(cls.conf, datasource, cls.conf.datasources.path)
+            register_opts(cls.conf, datasource, cls.conf.datasources.path)
 
         cls.manager = TransformerManager(cls.conf)
 

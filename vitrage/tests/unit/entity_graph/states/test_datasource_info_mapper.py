@@ -25,7 +25,7 @@ from vitrage.entity_graph.mappings.datasource_info_mapper import \
 from vitrage.entity_graph.mappings.operational_resource_state import \
     OperationalResourceState
 from vitrage.graph.utils import create_vertex
-from vitrage.service import load_datasource
+from vitrage.opts import register_opts
 from vitrage.tests import base
 from vitrage.tests.mocks import utils
 
@@ -53,7 +53,7 @@ class TestDatasourceInfoMapper(base.BaseTest):
     @staticmethod
     def _load_datasources(conf):
         for datasource_name in conf.datasources.types:
-            load_datasource(conf, datasource_name, conf.datasources.path)
+            register_opts(conf, datasource_name, conf.datasources.path)
 
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod

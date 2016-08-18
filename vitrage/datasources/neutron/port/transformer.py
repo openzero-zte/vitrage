@@ -54,8 +54,8 @@ class PortTransformer(ResourceTransformerBase):
         'port.delete.end': EventAction.DELETE_ENTITY,
     }
 
-    def __init__(self, transformers):
-        super(PortTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(PortTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
 
@@ -63,12 +63,14 @@ class PortTransformer(ResourceTransformerBase):
         entity_id = entity_event['id']
         state = entity_event['status']
         update_timestamp = entity_event['updated_at']
+        project_id = entity_event.get('tenant_id', None)
 
         return self._create_vertex(entity_event,
                                    name,
                                    entity_id,
                                    state,
-                                   update_timestamp)
+                                   update_timestamp,
+                                   project_id)
 
     def _create_update_entity_vertex(self, entity_event):
 
@@ -79,19 +81,22 @@ class PortTransformer(ResourceTransformerBase):
             extract_field_value(entity_event, 'port', 'updated_at')
         entity_id = extract_field_value(entity_event,
                                         *self.UPDATE_ID_PROPERTY[event_type])
+        project_id = extract_field_value(entity_event, 'port', 'tenant_id')
 
         return self._create_vertex(entity_event,
                                    name,
                                    entity_id,
                                    state,
-                                   update_timestamp)
+                                   update_timestamp,
+                                   project_id)
 
     def _create_vertex(self,
                        entity_event,
                        name,
                        entity_id,
                        state,
-                       update_timestamp):
+                       update_timestamp,
+                       project_id):
         event_type = entity_event.get(DSProps.EVENT_TYPE, None)
         ip_addresses = []
         if not event_type:
@@ -100,7 +105,7 @@ class PortTransformer(ResourceTransformerBase):
             ip_addresses = [ip['ip_address'] for ip in fixed_ips]
         metadata = {
             VProps.NAME: name,
-            VProps.TENANT_ID: entity_event.get(VProps.TENANT_ID, None),
+            VProps.PROJECT_ID: project_id,
             'ip_addresses': tuple(ip_addresses),
         }
 
@@ -199,3 +204,6 @@ class PortTransformer(ResourceTransformerBase):
         key_fields = self._key_values(NEUTRON_PORT_DATASOURCE, port_id)
 
         return tbase.build_key(key_fields)
+
+    def get_type(self):
+        return NEUTRON_PORT_DATASOURCE

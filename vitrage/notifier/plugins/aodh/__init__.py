@@ -12,4 +12,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-pass
+from oslo_config import cfg
+
+OPTS = [
+    cfg.StrOpt('notifier',
+               default='vitrage.notifier.plugins.aodh.'
+                       'aodh_notifier.AodhNotifier',
+               help='aodh notifier class path',
+               required=True),
+]

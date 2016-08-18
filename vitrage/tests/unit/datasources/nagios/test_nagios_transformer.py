@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from vitrage.common.constants import DatasourceProperties as DSProps
@@ -19,8 +20,10 @@ from vitrage.common.constants import EdgeLabel
 from vitrage.common.constants import EntityCategory
 from vitrage.common.constants import EventAction
 from vitrage.common.constants import SyncMode
+from vitrage.common.constants import UpdateMethod
 from vitrage.common.constants import VertexProperties as VProps
 from vitrage.datasources.alarm_properties import AlarmProperties as AlarmProps
+from vitrage.datasources.nagios import NAGIOS_DATASOURCE
 from vitrage.datasources.nagios.properties import NagiosProperties
 from vitrage.datasources.nagios.properties import NagiosTestStatus
 from vitrage.datasources.nagios.transformer import NagiosTransformer
@@ -37,12 +40,19 @@ LOG = logging.getLogger(__name__)
 # noinspection PyProtectedMember
 class NagiosTransformerTest(base.BaseTest):
 
+    OPTS = [
+        cfg.StrOpt('update_method',
+                   default=UpdateMethod.PULL),
+    ]
+
     # noinspection PyAttributeOutsideInit,PyPep8Naming
     @classmethod
     def setUpClass(cls):
         cls.transformers = {}
-        host_transformer = HostTransformer(cls.transformers)
-        cls.transformers[NOVA_HOST_DATASOURCE] = host_transformer
+        cls.conf = cfg.ConfigOpts()
+        cls.conf.register_opts(cls.OPTS, group=NAGIOS_DATASOURCE)
+        cls.transformers[NOVA_HOST_DATASOURCE] = \
+            HostTransformer(cls.transformers, cls.conf)
 
     def test_extract_key(self):
         LOG.debug('Test get key from nova instance transformer')
@@ -51,7 +61,7 @@ class NagiosTransformerTest(base.BaseTest):
         spec_list = mock_sync.simple_nagios_alarm_generators(host_num=1,
                                                              events_num=1)
         nagios_alarms = mock_sync.generate_sequential_events_list(spec_list)
-        transformer = NagiosTransformer(self.transformers)
+        transformer = NagiosTransformer(self.transformers, self.conf)
 
         event = nagios_alarms[0]
         # Test action
@@ -78,7 +88,8 @@ class NagiosTransformerTest(base.BaseTest):
 
         for alarm in nagios_alarms:
             # Test action
-            wrapper = NagiosTransformer(self.transformers).transform(alarm)
+            wrapper = NagiosTransformer(self.transformers, self.conf).\
+                transform(alarm)
             self._validate_vertex(wrapper.vertex, alarm)
 
             neighbors = wrapper.neighbors
@@ -149,7 +160,7 @@ class NagiosTransformerTest(base.BaseTest):
         edge = neighbor.edge
         self.assertEqual(EdgeLabel.ON, edge.label)
 
-        alarm_key = \
-            NagiosTransformer(self.transformers)._create_entity_key(event)
+        alarm_key = NagiosTransformer(self.transformers, self.conf).\
+            _create_entity_key(event)
         self.assertEqual(alarm_key, edge.source_id)
         self.assertEqual(host_vertex.vertex_id, edge.target_id)

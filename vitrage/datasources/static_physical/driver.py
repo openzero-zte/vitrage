@@ -32,10 +32,6 @@ class StaticPhysicalDriver(DriverBase):
     def enrich_event(event, event_type):
         pass
 
-    @staticmethod
-    def get_topic(conf):
-        return None
-
     ENTITIES_SECTION = 'entities'
 
     def __init__(self, conf):

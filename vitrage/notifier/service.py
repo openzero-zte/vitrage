@@ -15,11 +15,10 @@
 from oslo_log import log
 import oslo_messaging
 from oslo_service import service as os_service
+from oslo_utils import importutils
 
 from vitrage import messaging
-from vitrage.notifier.plugins.aodh.aodh_notifier import AodhNotifier
-from vitrage.notifier.plugins.nova.nova_notifier import NovaNotifier
-
+from vitrage.opts import register_opts
 
 LOG = log.getLogger(__name__)
 
@@ -60,11 +59,12 @@ class VitrageNotifierService(os_service.Service):
         if not conf_notifier_names:
             LOG.info('There are no notifier plugins in configuration')
             return []
-        for plugin in [AodhNotifier, NovaNotifier]:
-            plugin_name = plugin.get_notifier_name()
-            if plugin_name in conf_notifier_names:
-                LOG.info('Notifier plugin %s started', plugin_name)
-                notifiers.append(plugin(conf))
+        for notifier_name in conf_notifier_names:
+            register_opts(conf, notifier_name, conf.notifiers_path)
+            LOG.info('Notifier plugin %s started', notifier_name)
+            notifiers.append(importutils.import_object(
+                conf[notifier_name].notifier,
+                conf))
         return notifiers
 
 

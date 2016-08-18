@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from vitrage.common.constants import UpdateMethod
 
 NEUTRON_PORT_DATASOURCE = 'neutron.port'
 
@@ -26,7 +27,11 @@ OPTS = [
                default='vitrage.datasources.neutron.port.driver.PortDriver',
                help='Neutron port driver class path',
                required=True),
-    cfg.StrOpt('notification_topic',
-               default='vitrage_notifications',
-               help='Neutron port configured notifications topic for Vitrage'),
+    cfg.StrOpt('update_method',
+               default=UpdateMethod.PUSH,
+               help='None: updates only via Vitrage periodic snapshots.'
+                    'Pull: updates every [changes_interval] seconds.'
+                    'Push: updates by getting notifications from the'
+                    ' datasource itself.',
+               required=True),
 ]

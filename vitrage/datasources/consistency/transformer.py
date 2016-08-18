@@ -17,6 +17,7 @@ from oslo_log import log as logging
 from vitrage.common.constants import DatasourceProperties as DSProps
 from vitrage.common.constants import EventAction
 from vitrage.common.constants import VertexProperties as VProps
+from vitrage.datasources.consistency import CONSISTENCY_DATASOURCE
 from vitrage.datasources.resource_transformer_base import \
     ResourceTransformerBase
 import vitrage.graph.utils as graph_utils
@@ -33,8 +34,8 @@ class ConsistencyTransformer(ResourceTransformerBase):
         EventAction.REMOVE_DELETED_ENTITY: EventAction.REMOVE_DELETED_ENTITY
     }
 
-    def __init__(self, transformers):
-        super(ConsistencyTransformer, self).__init__(transformers)
+    def __init__(self, transformers, conf):
+        super(ConsistencyTransformer, self).__init__(transformers, conf)
 
     def _create_snapshot_entity_vertex(self, entity_event):
         return self._create_vertex(entity_event)
@@ -56,3 +57,6 @@ class ConsistencyTransformer(ResourceTransformerBase):
 
     def _create_update_neighbors(self, entity_event):
         return None
+
+    def get_type(self):
+        return CONSISTENCY_DATASOURCE

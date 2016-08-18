@@ -147,6 +147,9 @@ def validate_scenario_condition(condition, template_ids):
 
     for condition_var in condition.split(' '):
 
+        if len(condition_var.strip()) == 0:
+            continue
+
         result = _validate_template_id(template_ids, condition_var)
         if not result.is_valid:
             return result
@@ -257,7 +260,8 @@ def validate_mark_down_action(action, entities_ids):
 def _validate_template_id(ids, id_to_check):
 
     if id_to_check not in ids:
-        LOG.error('%s status code: %s' % (status_msgs[3], 3))
-        return get_fault_result(RESULT_DESCRIPTION, 3)
+        msg = status_msgs[3] + ' template id: %s' % id_to_check
+        LOG.error('%s status code: %s' % (msg, 3))
+        return get_fault_result(RESULT_DESCRIPTION, 3, msg)
 
     return get_correct_result(RESULT_DESCRIPTION)

@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from vitrage.common.constants import UpdateMethod
 
 STATIC_PHYSICAL_DATASOURCE = 'static_physical'
 SWITCH = 'switch'
@@ -28,12 +29,18 @@ OPTS = [
                        'StaticPhysicalDriver',
                help='Static physical driver class path',
                required=True),
+    cfg.StrOpt('update_method',
+               default=UpdateMethod.PULL,
+               help='None: updates only via Vitrage periodic snapshots.'
+                    'Pull: updates every [changes_interval] seconds.'
+                    'Push: updates by getting notifications from the'
+                    ' datasource itself.',
+               required=True),
     cfg.IntOpt('changes_interval',
                default=20,
                min=5,
                help='interval between checking changes in the configuration '
-                    'files of the physical topology data sources',
-               required=True),
+                    'files of the physical topology data sources'),
     cfg.StrOpt('directory', default='/etc/vitrage/static_datasources',
                help='Static physical data sources directory'),
     cfg.ListOpt('entities',
