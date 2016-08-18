@@ -25,7 +25,7 @@ class AodhProperties(object):
     PROJECT_ID = 'project_id'
     QUERY = 'query'
     REPEAT_ACTIONS = 'repeat_actions'
-    RESOURCE_ID = 'traits.resource_id'
+    RESOURCE_ID = 'resource_id'
     SEVERITY = 'severity'
     STATE_TIMESTAMP = 'state_timestamp'
     THRESHOLD = 'threshold'
